@@ -138,8 +138,21 @@
   /* 数字严格居中，单位挂在数字右下（不挤占居中宽度） */
   #app > div { position: relative; display: inline-block; }
 
+  /* 竖屏显示：字号按数字位数分档，尽量放大又不溢出（右侧还要留 km/h） */
   #speed {
-    font-size: min(calc(52 * var(--Uvh, 1dvh)), calc(30 * var(--Uvw, 1vw)));
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(32 * var(--Uvw, 1vw)));
+  }
+  #speed[data-len="2"] {
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(58 * var(--Uvw, 1vw)));
+  }
+  #speed[data-len="3"] {
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(46 * var(--Uvw, 1vw)));
+  }
+  #speed[data-len="4"] {
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(34 * var(--Uvw, 1vw)));
+  }
+
+  #speed {
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -191,21 +204,21 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* 横屏布局：强制横屏，或 auto 下物理横屏 */
+  /* 横屏布局：强制横屏，或 auto 下物理横屏（选择器含两个 id 以覆盖竖屏分档） */
   html[data-orient="landscape"] #app {
     flex-direction: row;
     gap: calc(3 * var(--Uvw, 1vw));
   }
-  html[data-orient="landscape"] #speed {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(24 * var(--Uvw, 1vw)));
+  html[data-orient="landscape"] #screen #speed {
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(26 * var(--Uvw, 1vw)));
   }
   @media (orientation: landscape) {
-    html:not([data-orient]) #app {
+    html:not([data-orient="portrait"]) #app {
       flex-direction: row;
       gap: calc(3 * var(--Uvw, 1vw));
     }
-    html:not([data-orient]) #speed {
-      font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(24 * var(--Uvw, 1vw)));
+    html:not([data-orient="portrait"]) #screen #speed {
+      font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(26 * var(--Uvw, 1vw)));
     }
   }
 
@@ -344,7 +357,7 @@
 <div id="screen">
 <div id="app">
   <div>
-    <span id="speed">00</span>
+    <span id="speed" data-len="2">00</span>
     <span id="unit">km/h</span>
   </div>
 </div>
@@ -434,7 +447,9 @@
     // 低速时 GPS 抖动大，直接归零
     var kmh = ms < 0.5 ? 0 : ms * 3.6;
 
-    speedEl.textContent = kmh >= 100 ? Math.round(kmh) : kmh.toFixed(1);
+    var speedText = kmh >= 100 ? Math.round(kmh) : kmh.toFixed(1);
+    speedEl.textContent = speedText;
+    speedEl.dataset.len = speedText.length;
     if (kmh > maxSpeed) {
       maxSpeed = kmh;
       maxEl.textContent = '最高 ' + maxSpeed.toFixed(1);
