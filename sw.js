@@ -1,5 +1,5 @@
 // 码表离线缓存：在线时优先用网络（保证更新），离线时回退缓存
-var CACHE = 'speedometer-v3';
+var CACHE = 'speedometer-v4';
 var ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', function (e) {
