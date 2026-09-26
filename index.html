@@ -681,15 +681,17 @@ if ('serviceWorker' in navigator) {
   applyTheme(current());
 })();
 
-// 屏幕方向快捷切换：auto（跟随系统）→ 横屏 → 竖屏 → auto
+// 屏幕方向切换：点一下在 横屏 ⇄ 竖屏 之间直接切换
 // 全屏时优先用原生 Screen Orientation API，失败/不支持时 CSS 旋转兜底
 (function () {
   var html = document.documentElement;
   var screenEl = document.getElementById('screen');
   var speedEl = document.getElementById('speed');
   var unitEl = document.getElementById('unit');
+  var statusEl = document.getElementById('status');
+  var maxEl = document.getElementById('max');
+  var settingsBtnEl = document.getElementById('settingsBtn');
   var btn = document.getElementById('orientBtn');
-  var ORDER = ['auto', 'landscape', 'portrait'];
   var LABEL = { auto: '跟随系统', landscape: '横屏', portrait: '竖屏' };
   var nativeLocked = false;
 
@@ -720,9 +722,58 @@ if ('serviceWorker' in navigator) {
     else wPct = 32;                  // 5 位及以上（如 123.4）
     speedEl.style.fontSize = Math.min(0.6 * dh, wPct * dw / 100) + 'px';
     unitEl.style.fontSize = (0.05 * Math.min(dw, dh)) + 'px';
+
+    applySafeLayout(swapped);
   }
   // 供测速脚本在数字位数变化时重算字号
   window.__updateUnits = updateUnits;
+
+  // 用隐藏探针读取四条边的安全区（挖孔/刘海高度）。
+  // 部分机型全屏时 CSS env() 失效，JS 主动测量最可靠；老浏览器不支持则读到 0
+  var insetProbe = null;
+  function readInsets() {
+    if (!insetProbe) {
+      insetProbe = document.createElement('div');
+      insetProbe.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;pointer-events:none;';
+      document.body.appendChild(insetProbe);
+    }
+    var sides = ['top', 'right', 'bottom', 'left'];
+    var out = { top: 0, right: 0, bottom: 0, left: 0 };
+    for (var i = 0; i < 4; i++) {
+      var s = sides[i];
+      insetProbe.style.paddingTop = 'constant(safe-area-inset-' + s + ')';
+      insetProbe.style.paddingTop = 'env(safe-area-inset-' + s + ')';
+      var v = window.getComputedStyle ? parseFloat(getComputedStyle(insetProbe).paddingTop) : 0;
+      out[s] = isFinite(v) ? v : 0;
+    }
+    insetProbe.style.paddingTop = '0px';
+    return out;
+  }
+
+  // 全屏时若测不到安全区（机型 env() 失效），给显示顶边一个挖孔高度兜底，防止遮挡文字
+  var FULLSCREEN_TOP_MIN = 28;
+
+  // 把物理安全区按"显示方向"映射到屏幕边，内联应用到顶部一排和底部最高速度
+  function applySafeLayout(swapped) {
+    var ins = readInsets();
+    var mode = get();
+    var topI = ins.top, rightI = ins.right, bottomI = ins.bottom;
+    if (swapped && mode === 'landscape') {
+      // 物理竖屏强制横屏：显示上=物理右，显示右=物理下，显示下=物理左
+      topI = ins.right; rightI = ins.bottom; bottomI = ins.left;
+    } else if (swapped && mode === 'portrait') {
+      // 物理横屏强制竖屏：显示上=物理左，显示右=物理上，显示下=物理右
+      topI = ins.left; rightI = ins.top; bottomI = ins.right;
+    }
+    if (isFullscreen() && topI < FULLSCREEN_TOP_MIN) topI = FULLSCREEN_TOP_MIN;
+    statusEl.style.top = (topI + 10) + 'px';
+    statusEl.style.bottom = 'auto';
+    maxEl.style.bottom = (bottomI + 12) + 'px';
+    settingsBtnEl.style.top = (topI + 8) + 'px';
+    settingsBtnEl.style.right = (rightI + 10) + 'px';
+    btn.style.top = (topI + 8) + 'px';
+    btn.style.right = (rightI + 54) + 'px';
+  }
 
   // 老浏览器没有 Promise，用一个假的 thenable 保持调用方一致
   function fakeThenable(val) {
@@ -764,21 +815,31 @@ if ('serviceWorker' in navigator) {
     render();
   }
 
+  // 点一下直接切换显示方向：当前显示竖屏 → 横屏，当前显示横屏 → 竖屏
+  // auto 状态下按当前物理方向判断"当前显示方向"，切到相反方向
   btn.addEventListener('click', function (e) {
     e.stopPropagation();
-    var next = ORDER[(ORDER.indexOf(get()) + 1) % ORDER.length];
+    var mode = get();
+    var next;
+    if (mode === 'landscape') next = 'portrait';
+    else if (mode === 'portrait') next = 'landscape';
+    else next = (window.innerWidth > window.innerHeight) ? 'portrait' : 'landscape';
     setMode(next);
   });
 
   // 进入/退出全屏时重新评估原生锁定；退出后 CSS 兜底自动接管
-  document.addEventListener('fullscreenchange', function () {
+  function onFsChange() {
     if (isFullscreen()) tryNativeLock(get());
     else if (nativeLocked) {
       try { screen.orientation.unlock(); } catch (e) {}
       nativeLocked = false;
     }
     render();
-  });
+    // 全屏过渡动画结束后安全区才稳定，延迟再刷一次
+    setTimeout(render, 350);
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
 
   window.addEventListener('resize', updateUnits);
   window.addEventListener('orientationchange', updateUnits);
