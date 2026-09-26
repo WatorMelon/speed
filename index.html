@@ -6,20 +6,70 @@
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>码表</title>
+<script>
+// 首屏前应用主题，避免闪烁：auto=跟随系统（默认）/ dark / light
+(function () {
+  try {
+    var t = localStorage.getItem('theme') || 'auto';
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+})();
+</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* 主题变量：默认浅色，系统深色时自动切换，显式 data-theme 覆盖 */
+  :root {
+    --bg: #f5f5f7;
+    --fg: #111111;
+    --fg-dim: #8a8a8e;
+    --fg-dim2: #9a9aa0;
+    --fg-stale: #c4c4cc;
+    --border: #d8d8de;
+    --panel: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --fg: #ffffff;
+      --fg-dim: #666666;
+      --fg-dim2: #555555;
+      --fg-stale: #444444;
+      --border: #333333;
+      --panel: #1c1c1e;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #000000;
+    --fg: #ffffff;
+    --fg-dim: #666666;
+    --fg-dim2: #555555;
+    --fg-stale: #444444;
+    --border: #333333;
+    --panel: #1c1c1e;
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f5f7;
+    --fg: #111111;
+    --fg-dim: #8a8a8e;
+    --fg-dim2: #9a9aa0;
+    --fg-stale: #c4c4cc;
+    --border: #d8d8de;
+    --panel: #ffffff;
+  }
+
   html, body {
     height: 100%;
-    background: #000;
-    color: #fff;
+    background: var(--bg);
+    color: var(--fg);
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     overflow: hidden;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
+    transition: background .3s, color .3s;
   }
 
   #app {
@@ -38,15 +88,15 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
-    color: #fff;
+    color: var(--fg);
     transition: color .3s;
   }
 
-  #speed.stale { color: #444; }
+  #speed.stale { color: var(--fg-stale); }
 
   #unit {
     font-size: min(5dvh, 5vw);
-    color: #666;
+    color: var(--fg-dim);
     letter-spacing: .3em;
     margin-left: .3em;
   }
@@ -60,7 +110,7 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: #555;
+    color: var(--fg-dim2);
   }
 
   #dot {
@@ -77,7 +127,7 @@
     left: 50%;
     transform: translateX(-50%);
     font-size: 14px;
-    color: #555;
+    color: var(--fg-dim2);
     font-variant-numeric: tabular-nums;
   }
 
@@ -93,8 +143,8 @@
     top: 58%;
     transform: translateX(-50%);
     font-size: 14px;
-    color: #666;
-    border: 1px solid #333;
+    color: var(--fg-dim);
+    border: 1px solid var(--border);
     border-radius: 20px;
     padding: 8px 16px;
     opacity: 0;
@@ -104,6 +154,98 @@
   }
   #fsHint.show { opacity: 1; }
   #fsHint.hide { display: none; }
+
+  /* 设置按钮 */
+  #settingsBtn {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 8px);
+    right: calc(env(safe-area-inset-right) + 10px);
+    width: 38px; height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--fg-dim);
+    border-radius: 50%;
+    z-index: 20;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #settingsBtn:active { color: var(--fg); }
+  #settingsBtn svg { width: 22px; height: 22px; }
+
+  /* 设置面板 */
+  #settingsMask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  #settingsMask.open { opacity: 1; pointer-events: auto; }
+
+  #settingsPanel {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(.96);
+    width: min(300px, 82vw);
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 18px 18px 8px;
+    z-index: 31;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    box-shadow: 0 10px 40px rgba(0,0,0,.3);
+  }
+  #settingsPanel.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+
+  #settingsPanel h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg);
+    margin-bottom: 12px;
+  }
+  .theme-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    font-size: 15px;
+    color: var(--fg);
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .theme-opt:first-of-type { border-top: none; }
+  .theme-opt .radio {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--fg-dim);
+    position: relative;
+    flex: none;
+  }
+  .theme-opt.active .radio { border-color: #0a84ff; }
+  .theme-opt.active .radio::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: #0a84ff;
+  }
+  #settingsClose {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 0;
+    border: none;
+    background: transparent;
+    color: #0a84ff;
+    font-size: 15px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -116,6 +258,21 @@
 <div id="status"><span id="dot" class="wait"></span><span id="statusText">GPS 定位中…</span></div>
 <div id="max">最高 0.0</div>
 <div id="fsHint">双击屏幕全屏</div>
+
+<button id="settingsBtn" aria-label="设置">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+<div id="settingsMask"></div>
+<div id="settingsPanel">
+  <h2>主题</h2>
+  <div class="theme-opt" data-theme-opt="auto"><span>跟随系统</span><span class="radio"></span></div>
+  <div class="theme-opt" data-theme-opt="dark"><span>深色</span><span class="radio"></span></div>
+  <div class="theme-opt" data-theme-opt="light"><span>浅色</span><span class="radio"></span></div>
+  <button id="settingsClose">完成</button>
+</div>
 
 <script>
 (function () {
@@ -212,32 +369,105 @@
 })();
 </script>
 <script>
-// PWA：manifest 用 data URI 内联（省掉单独文件），SW 因安全模型必须独立文件
-(function () {
-  var icon = 'data:image/svg+xml,' + encodeURIComponent(
-    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'>"
-    + "<rect width='192' height='192' rx='40' fill='#000'/>"
-    + "<path d='M48 124a48 48 0 0 1 96 0' fill='none' stroke='#444' stroke-width='10' stroke-linecap='round'/>"
-    + "<path d='M96 124 130 78' stroke='#0c6' stroke-width='10' stroke-linecap='round'/>"
-    + "</svg>");
-  var manifest = {
-    name: '码表', short_name: '码表',
-    display: 'fullscreen',
-    background_color: '#000000', theme_color: '#000000',
-    icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
-  };
-  var link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
-  document.head.appendChild(link);
-})();
-
-// 离线缓存：首次打开后可离线使用，刷新也不会丢
+// 离线缓存 + PWA（manifest 由主题脚本按当前主题动态注入）
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('./sw.js');
   });
 }
+
+// 主题设置：跟随系统（默认）/ 深色 / 浅色，选择持久化
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('settingsBtn');
+  var mask = document.getElementById('settingsMask');
+  var panel = document.getElementById('settingsPanel');
+  var closeBtn = document.getElementById('settingsClose');
+  var opts = panel.querySelectorAll('.theme-opt');
+  var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  var settingsOpen = false;
+  window.__settingsOpen = false; // 供全屏双击逻辑判断
+
+  function current() {
+    try { return localStorage.getItem('theme') || 'auto'; } catch (e) { return 'auto'; }
+  }
+  function effectiveBg() {
+    return getComputedStyle(root).getPropertyValue('--bg').trim() || '#000000';
+  }
+
+  function writeManifest(bg) {
+    var icon = 'data:image/svg+xml,' + encodeURIComponent(
+      "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'>"
+      + "<rect width='192' height='192' rx='40' fill='" + bg + "'/>"
+      + "<path d='M48 124a48 48 0 0 1 96 0' fill='none' stroke='#666' stroke-width='10' stroke-linecap='round'/>"
+      + "<path d='M96 124 130 78' stroke='#0c6' stroke-width='10' stroke-linecap='round'/>"
+      + "</svg>");
+    var manifest = {
+      name: '码表', short_name: '码表', display: 'fullscreen',
+      background_color: bg, theme_color: bg,
+      icons: [{ src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+    };
+    var link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'manifest';
+      document.head.appendChild(link);
+    }
+    link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+  }
+
+  function applyTheme(t) {
+    if (t === 'dark' || t === 'light') root.dataset.theme = t;
+    else delete root.dataset.theme;
+    opts.forEach(function (o) {
+      o.classList.toggle('active', o.dataset.themeOpt === t);
+    });
+    // CSS 变量在下一帧才更新，延后读取
+    requestAnimationFrame(function () {
+      var bg = effectiveBg();
+      themeColorMeta.setAttribute('content', bg);
+      writeManifest(bg);
+    });
+  }
+
+  function openSettings() {
+    settingsOpen = true;
+    window.__settingsOpen = true;
+    mask.classList.add('open');
+    panel.classList.add('open');
+  }
+  function closeSettings() {
+    settingsOpen = false;
+    window.__settingsOpen = false;
+    mask.classList.remove('open');
+    panel.classList.remove('open');
+  }
+
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    openSettings();
+  });
+  mask.addEventListener('click', function (e) { e.stopPropagation(); closeSettings(); });
+  closeBtn.addEventListener('click', function (e) { e.stopPropagation(); closeSettings(); });
+  panel.addEventListener('click', function (e) { e.stopPropagation(); });
+  opts.forEach(function (o) {
+    o.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var t = o.dataset.themeOpt;
+      try { localStorage.setItem('theme', t); } catch (err) {}
+      applyTheme(t);
+    });
+  });
+
+  // auto 模式下系统主题变化时同步状态栏颜色
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      if (current() === 'auto') applyTheme('auto');
+    });
+  }
+
+  applyTheme(current());
+})();
 
 // 双击切换全屏 + 屏幕常亮（Wake Lock）
 (function () {
@@ -275,6 +505,7 @@ if ('serviceWorker' in navigator) {
   // 双击检测：触摸和鼠标统一走 click，300ms 内两次视为双击
   var lastTap = 0;
   function onTap(e) {
+    if (window.__settingsOpen) return; // 设置面板打开时不响应
     var now = Date.now();
     if (now - lastTap < 300) {
       e.preventDefault();
