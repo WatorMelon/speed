@@ -77,6 +77,7 @@
   /* 屏幕旋转包装层：默认铺满视口，内部 fixed 元素以此为包含块 */
   #screen {
     position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
     inset: 0;
     overflow: hidden;
   }
@@ -84,6 +85,7 @@
      显示边映射：上→物理右，右→物理下，下→物理左，左→物理上 */
   @media (orientation: portrait) {
     html[data-orient="landscape"] #screen {
+      width: 100vh;
       width: 100dvh;
       height: 100vw;
       transform: translate3d(100vw, 0, 0) rotate(90deg);
@@ -93,21 +95,23 @@
       padding: env(safe-area-inset-right) env(safe-area-inset-bottom)
                env(safe-area-inset-left) env(safe-area-inset-top);
     }
-    html[data-orient="landscape"] #status { top: calc(env(safe-area-inset-right) + 10px); }
-    html[data-orient="landscape"] #max { bottom: calc(env(safe-area-inset-left) + 12px); }
+    html[data-orient="landscape"] #status { top: calc(constant(safe-area-inset-right) + 10px); top: calc(env(safe-area-inset-right) + 10px); }
+    html[data-orient="landscape"] #max { bottom: calc(constant(safe-area-inset-left) + 12px); bottom: calc(env(safe-area-inset-left) + 12px); }
     html[data-orient="landscape"] #settingsBtn,
     html[data-orient="landscape"] #orientBtn {
-      top: calc(env(safe-area-inset-right) + 8px);
+      top: calc(constant(safe-area-inset-right) + 8px); top: calc(env(safe-area-inset-right) + 8px);
     }
-    html[data-orient="landscape"] #settingsBtn { right: calc(env(safe-area-inset-bottom) + 10px); }
-    html[data-orient="landscape"] #orientBtn { right: calc(env(safe-area-inset-bottom) + 54px); }
+    html[data-orient="landscape"] #settingsBtn { right: calc(constant(safe-area-inset-bottom) + 10px); right: calc(env(safe-area-inset-bottom) + 10px); }
+    html[data-orient="landscape"] #orientBtn { right: calc(constant(safe-area-inset-bottom) + 54px); right: calc(env(safe-area-inset-bottom) + 54px); }
   }
   /* 物理横屏 → 强制竖屏：逆时针 90°，宽高互换
      显示边映射：上→物理左，右→物理上，下→物理右，左→物理下 */
   @media (orientation: landscape) {
     html[data-orient="portrait"] #screen {
+      width: 100vh;
       width: 100dvh;
       height: 100vw;
+      transform: translate3d(0, 100vh, 0) rotate(-90deg);
       transform: translate3d(0, 100dvh, 0) rotate(-90deg);
       transform-origin: left top;
     }
@@ -115,14 +119,14 @@
       padding: env(safe-area-inset-left) env(safe-area-inset-top)
                env(safe-area-inset-right) env(safe-area-inset-bottom);
     }
-    html[data-orient="portrait"] #status { top: calc(env(safe-area-inset-left) + 10px); }
-    html[data-orient="portrait"] #max { bottom: calc(env(safe-area-inset-right) + 12px); }
+    html[data-orient="portrait"] #status { top: calc(constant(safe-area-inset-left) + 10px); top: calc(env(safe-area-inset-left) + 10px); }
+    html[data-orient="portrait"] #max { bottom: calc(constant(safe-area-inset-right) + 12px); bottom: calc(env(safe-area-inset-right) + 12px); }
     html[data-orient="portrait"] #settingsBtn,
     html[data-orient="portrait"] #orientBtn {
-      top: calc(env(safe-area-inset-left) + 8px);
+      top: calc(constant(safe-area-inset-left) + 8px); top: calc(env(safe-area-inset-left) + 8px);
     }
-    html[data-orient="portrait"] #settingsBtn { right: calc(env(safe-area-inset-top) + 10px); }
-    html[data-orient="portrait"] #orientBtn { right: calc(env(safe-area-inset-top) + 54px); }
+    html[data-orient="portrait"] #settingsBtn { right: calc(constant(safe-area-inset-top) + 10px); right: calc(env(safe-area-inset-top) + 10px); }
+    html[data-orient="portrait"] #orientBtn { right: calc(constant(safe-area-inset-top) + 54px); right: calc(env(safe-area-inset-top) + 54px); }
   }
 
   #app {
@@ -131,7 +135,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: calc(2 * var(--Uvh, 1dvh));
+    gap: calc(2 * var(--Uvh, 1vh));
+    padding: constant(safe-area-inset-top) constant(safe-area-inset-right) constant(safe-area-inset-bottom) constant(safe-area-inset-left);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
@@ -140,16 +145,20 @@
 
   /* 竖屏显示：字号按数字位数分档，尽量放大又不溢出（右侧还要留 km/h） */
   #speed {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(32 * var(--Uvw, 1vw)));
+    font-size: calc(45 * var(--Uvh, 1vh));
+    font-size: min(calc(60 * var(--Uvh, 1vh)), calc(32 * var(--Uvw, 1vw)));
   }
   #speed[data-len="2"] {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(58 * var(--Uvw, 1vw)));
+    font-size: calc(45 * var(--Uvh, 1vh));
+    font-size: min(calc(60 * var(--Uvh, 1vh)), calc(58 * var(--Uvw, 1vw)));
   }
   #speed[data-len="3"] {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(46 * var(--Uvw, 1vw)));
+    font-size: calc(45 * var(--Uvh, 1vh));
+    font-size: min(calc(60 * var(--Uvh, 1vh)), calc(46 * var(--Uvw, 1vw)));
   }
   #speed[data-len="4"] {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(34 * var(--Uvw, 1vw)));
+    font-size: calc(45 * var(--Uvh, 1vh));
+    font-size: min(calc(60 * var(--Uvh, 1vh)), calc(34 * var(--Uvw, 1vw)));
   }
 
   #speed {
@@ -168,7 +177,8 @@
     left: 100%;
     bottom: 0.08em;
     margin-left: .25em;
-    font-size: min(calc(5 * var(--Uvh, 1dvh)), calc(5 * var(--Uvw, 1vw)));
+    font-size: calc(4 * var(--Uvh, 1vh));
+    font-size: min(calc(5 * var(--Uvh, 1vh)), calc(5 * var(--Uvw, 1vw)));
     color: var(--fg-dim);
     letter-spacing: .2em;
     white-space: nowrap;
@@ -176,6 +186,8 @@
 
   #status {
     position: fixed;
+    top: 10px;
+    top: calc(constant(safe-area-inset-top) + 10px);
     top: calc(env(safe-area-inset-top) + 10px);
     left: 50%;
     transform: translateX(-50%);
@@ -196,6 +208,8 @@
 
   #max {
     position: fixed;
+    bottom: 12px;
+    bottom: calc(constant(safe-area-inset-bottom) + 12px);
     bottom: calc(env(safe-area-inset-bottom) + 12px);
     left: 50%;
     transform: translateX(-50%);
@@ -210,7 +224,8 @@
     gap: calc(3 * var(--Uvw, 1vw));
   }
   html[data-orient="landscape"] #screen #speed {
-    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(26 * var(--Uvw, 1vw)));
+    font-size: calc(24 * var(--Uvw, 1vw));
+    font-size: min(calc(60 * var(--Uvh, 1vh)), calc(26 * var(--Uvw, 1vw)));
   }
   @media (orientation: landscape) {
     html:not([data-orient="portrait"]) #app {
@@ -218,7 +233,8 @@
       gap: calc(3 * var(--Uvw, 1vw));
     }
     html:not([data-orient="portrait"]) #screen #speed {
-      font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(26 * var(--Uvw, 1vw)));
+      font-size: calc(24 * var(--Uvw, 1vw));
+      font-size: min(calc(60 * var(--Uvh, 1vh)), calc(26 * var(--Uvw, 1vw)));
     }
   }
 
@@ -243,7 +259,11 @@
   /* 设置按钮 */
   #settingsBtn {
     position: fixed;
+    top: 8px;
+    top: calc(constant(safe-area-inset-top) + 8px);
     top: calc(env(safe-area-inset-top) + 8px);
+    right: 10px;
+    right: calc(constant(safe-area-inset-right) + 10px);
     right: calc(env(safe-area-inset-right) + 10px);
     width: 38px; height: 38px;
     display: flex;
@@ -262,7 +282,11 @@
 
   #orientBtn {
     position: fixed;
+    top: 8px;
+    top: calc(constant(safe-area-inset-top) + 8px);
     top: calc(env(safe-area-inset-top) + 8px);
+    right: 54px;
+    right: calc(constant(safe-area-inset-right) + 54px);
     right: calc(env(safe-area-inset-right) + 54px);
     width: 38px; height: 38px;
     display: flex;
@@ -283,6 +307,7 @@
   /* 设置面板 */
   #settingsMask {
     position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
     inset: 0;
     background: rgba(0,0,0,.45);
     z-index: 30;
@@ -336,6 +361,7 @@
   .theme-opt.active .radio::after {
     content: '';
     position: absolute;
+    top: 3px; right: 3px; bottom: 3px; left: 3px;
     inset: 3px;
     border-radius: 50%;
     background: #0a84ff;
@@ -423,8 +449,10 @@
     var rad = Math.PI / 180;
     var dLat = (fix.lat - lastFix.lat) * rad;
     var dLon = (fix.lon - lastFix.lon) * rad;
-    var a = Math.sin(dLat/2)**2 +
-            Math.cos(lastFix.lat*rad) * Math.cos(fix.lat*rad) * Math.sin(dLon/2)**2;
+    var sLat = Math.sin(dLat / 2);
+    var sLon = Math.sin(dLon / 2);
+    var a = sLat * sLat +
+            Math.cos(lastFix.lat*rad) * Math.cos(fix.lat*rad) * sLon * sLon;
     var dist = 2 * R * Math.asin(Math.sqrt(a));
     return dist / dt; // m/s
   }
@@ -536,9 +564,9 @@ if ('serviceWorker' in navigator) {
   function applyTheme(t) {
     if (t === 'dark' || t === 'light') root.dataset.theme = t;
     else delete root.dataset.theme;
-    opts.forEach(function (o) {
-      o.classList.toggle('active', o.dataset.themeOpt === t);
-    });
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.toggle('active', opts[i].dataset.themeOpt === t);
+    }
     // CSS 变量在下一帧才更新，延后读取
     requestAnimationFrame(function () {
       var bg = effectiveBg();
@@ -567,20 +595,26 @@ if ('serviceWorker' in navigator) {
   mask.addEventListener('click', function (e) { e.stopPropagation(); closeSettings(); });
   closeBtn.addEventListener('click', function (e) { e.stopPropagation(); closeSettings(); });
   panel.addEventListener('click', function (e) { e.stopPropagation(); });
-  opts.forEach(function (o) {
-    o.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var t = o.dataset.themeOpt;
-      try { localStorage.setItem('theme', t); } catch (err) {}
-      applyTheme(t);
-    });
-  });
+  for (var i = 0; i < opts.length; i++) {
+    (function (o) {
+      o.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var t = o.dataset.themeOpt;
+        try { localStorage.setItem('theme', t); } catch (err) {}
+        applyTheme(t);
+      });
+    })(opts[i]);
+  }
 
   // auto 模式下系统主题变化时同步状态栏颜色
+  // 旧浏览器 MediaQueryList 只有 addListener，没有 addEventListener
   if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+    var schemeMql = window.matchMedia('(prefers-color-scheme: dark)');
+    var onSchemeChange = function () {
       if (current() === 'auto') applyTheme('auto');
-    });
+    };
+    if (schemeMql.addEventListener) schemeMql.addEventListener('change', onSchemeChange);
+    else if (schemeMql.addListener) schemeMql.addListener(onSchemeChange);
   }
 
   applyTheme(current());
@@ -733,10 +767,12 @@ if ('serviceWorker' in navigator) {
     if (document.visibilityState === 'visible' && !wakeLock) requestWakeLock();
   });
   // 首次交互后申请（部分浏览器要求用户手势）
-  document.addEventListener('click', function once() {
+  // 不用 { once: true }：旧浏览器会把 options 对象误当作 capture=true，导致移除失败
+  var onceRequestWakeLock = function () {
     requestWakeLock();
-    document.removeEventListener('click', once);
-  }, { once: true });
+    document.removeEventListener('click', onceRequestWakeLock);
+  };
+  document.addEventListener('click', onceRequestWakeLock);
   requestWakeLock();
 })();
 </script>
