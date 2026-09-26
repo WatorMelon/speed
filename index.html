@@ -86,6 +86,24 @@
     #app { flex-direction: row; justify-content: center; gap: 3vw; }
     #speed { font-size: min(60dvh, 24vw); }
   }
+
+  #fsHint {
+    position: fixed;
+    left: 50%;
+    top: 58%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: #666;
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 8px 16px;
+    opacity: 0;
+    transition: opacity .5s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #fsHint.show { opacity: 1; }
+  #fsHint.hide { display: none; }
 </style>
 </head>
 <body>
@@ -97,6 +115,7 @@
 </div>
 <div id="status"><span id="dot" class="wait"></span><span id="statusText">GPS 定位中…</span></div>
 <div id="max">最高 0.0</div>
+<div id="fsHint">轻点屏幕进入全屏</div>
 
 <script>
 (function () {
@@ -219,6 +238,50 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js');
   });
 }
+
+// 自动全屏：浏览器要求全屏必须由用户手势触发，故首次轻点时进入
+(function () {
+  var hint = document.getElementById('fsHint');
+
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      || window.navigator.standalone === true; // iOS Safari
+  }
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function enterFullscreen() {
+    if (isFullscreen()) return;
+    var el = document.documentElement;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (fn) {
+      var p = fn.call(el);
+      if (p && p.catch) p.catch(function () {});
+    }
+  }
+  function onFsChange() {
+    if (isFullscreen() || isStandalone()) hint.classList.add('hide');
+  }
+
+  if (isStandalone() || isFullscreen()) {
+    hint.classList.add('hide');
+  } else {
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    // 首次任意触摸/点击即进入全屏，只触发一次
+    document.addEventListener('touchstart', function once() {
+      enterFullscreen();
+      setTimeout(function () { hint.classList.add('hide'); }, 1000);
+      document.removeEventListener('touchstart', once);
+    }, { once: true });
+    document.addEventListener('click', function once() {
+      enterFullscreen();
+      setTimeout(function () { hint.classList.add('hide'); }, 1000);
+      document.removeEventListener('click', once);
+    }, { once: true });
+    setTimeout(function () { hint.classList.add('show'); }, 800);
+  }
+})();
 </script>
 </body>
 </html>
