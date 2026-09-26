@@ -13,9 +13,9 @@
 (function () {
   try {
     var t = localStorage.getItem('theme') || 'auto';
-    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
     var o = localStorage.getItem('orient') || 'auto';
-    if (o === 'portrait' || o === 'landscape') document.documentElement.dataset.orient = o;
+    if (o === 'portrait' || o === 'landscape') document.documentElement.setAttribute('data-orient', o);
   } catch (e) {}
 })();
 </script>
@@ -64,7 +64,9 @@
 
   html, body {
     height: 100%;
+    background: #f5f5f7;
     background: var(--bg);
+    color: #111111;
     color: var(--fg);
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     overflow: hidden;
@@ -88,6 +90,7 @@
       width: 100vh;
       width: 100dvh;
       height: 100vw;
+      -webkit-transform: translate3d(100vw, 0, 0) rotate(90deg);
       transform: translate3d(100vw, 0, 0) rotate(90deg);
       transform-origin: left top;
     }
@@ -111,6 +114,8 @@
       width: 100vh;
       width: 100dvh;
       height: 100vw;
+      -webkit-transform: translate3d(0, 100vh, 0) rotate(-90deg);
+      -webkit-transform: translate3d(0, 100dvh, 0) rotate(-90deg);
       transform: translate3d(0, 100vh, 0) rotate(-90deg);
       transform: translate3d(0, 100dvh, 0) rotate(-90deg);
       transform-origin: left top;
@@ -131,9 +136,18 @@
 
   #app {
     height: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
     flex-direction: column;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
     align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
     justify-content: center;
     gap: calc(2 * var(--Uvh, 1vh));
     padding: constant(safe-area-inset-top) constant(safe-area-inset-right) constant(safe-area-inset-bottom) constant(safe-area-inset-left);
@@ -166,11 +180,12 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+    color: #111111;
     color: var(--fg);
     transition: color .3s;
   }
 
-  #speed.stale { color: var(--fg-stale); }
+  #speed.stale { color: #c4c4cc; color: var(--fg-stale); }
 
   #unit {
     position: absolute;
@@ -179,6 +194,7 @@
     margin-left: .25em;
     font-size: calc(4 * var(--Uvh, 1vh));
     font-size: min(calc(5 * var(--Uvh, 1vh)), calc(5 * var(--Uvw, 1vw)));
+    color: #8a8a8e;
     color: var(--fg-dim);
     letter-spacing: .2em;
     white-space: nowrap;
@@ -190,11 +206,17 @@
     top: calc(constant(safe-area-inset-top) + 10px);
     top: calc(env(safe-area-inset-top) + 10px);
     left: 50%;
+    -webkit-transform: translateX(-50%);
     transform: translateX(-50%);
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
     align-items: center;
     gap: 6px;
     font-size: 12px;
+    color: #9a9aa0;
     color: var(--fg-dim2);
   }
 
@@ -212,8 +234,10 @@
     bottom: calc(constant(safe-area-inset-bottom) + 12px);
     bottom: calc(env(safe-area-inset-bottom) + 12px);
     left: 50%;
+    -webkit-transform: translateX(-50%);
     transform: translateX(-50%);
     font-size: 14px;
+    color: #9a9aa0;
     color: var(--fg-dim2);
     font-variant-numeric: tabular-nums;
   }
@@ -242,9 +266,12 @@
     position: fixed;
     left: 50%;
     top: 58%;
+    -webkit-transform: translateX(-50%);
     transform: translateX(-50%);
     font-size: 14px;
+    color: #8a8a8e;
     color: var(--fg-dim);
+    border: 1px solid #d8d8de;
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 8px 16px;
@@ -271,13 +298,14 @@
     justify-content: center;
     border: none;
     background: transparent;
+    color: #8a8a8e;
     color: var(--fg-dim);
     border-radius: 50%;
     z-index: 20;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  #settingsBtn:active { color: var(--fg); }
+  #settingsBtn:active { color: #111111; color: var(--fg); }
   #settingsBtn svg { width: 22px; height: 22px; }
 
   #orientBtn {
@@ -294,13 +322,14 @@
     justify-content: center;
     border: none;
     background: transparent;
+    color: #8a8a8e;
     color: var(--fg-dim);
     border-radius: 50%;
     z-index: 20;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  #orientBtn:active { color: var(--fg); }
+  #orientBtn:active { color: #111111; color: var(--fg); }
   #orientBtn svg { width: 21px; height: 21px; }
   #orientBtn.forced { color: #0a84ff; }
 
@@ -320,8 +349,12 @@
   #settingsPanel {
     position: fixed;
     top: 50%; left: 50%;
+    -webkit-transform: translate(-50%, -50%) scale(.96);
     transform: translate(-50%, -50%) scale(.96);
+    width: 280px;
+    width: 82vw;
     width: min(300px, 82vw);
+    background: #ffffff;
     background: var(--panel);
     border-radius: 16px;
     padding: 18px 18px 8px;
@@ -331,21 +364,30 @@
     transition: opacity .25s, transform .25s;
     box-shadow: 0 10px 40px rgba(0,0,0,.3);
   }
-  #settingsPanel.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  #settingsPanel.open { opacity: 1; pointer-events: auto; -webkit-transform: translate(-50%, -50%) scale(1); transform: translate(-50%, -50%) scale(1); }
 
   #settingsPanel h2 {
     font-size: 15px;
     font-weight: 600;
+    color: #111111;
     color: var(--fg);
     margin-bottom: 12px;
   }
   .theme-opt {
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
     align-items: center;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
     justify-content: space-between;
     padding: 12px 4px;
     font-size: 15px;
+    color: #111111;
     color: var(--fg);
+    border-top: 1px solid #d8d8de;
     border-top: 1px solid var(--border);
     cursor: pointer;
   }
@@ -353,6 +395,7 @@
   .theme-opt .radio {
     width: 20px; height: 20px;
     border-radius: 50%;
+    border: 2px solid #8a8a8e;
     border: 2px solid var(--fg-dim);
     position: relative;
     flex: none;
@@ -426,6 +469,18 @@
   var lastFix = null;       // 上一次有效定位
   var staleTimer = null;    // 超过 5 秒没更新则置灰
 
+  // 老浏览器可能没有 classList，用 className 兜底
+  function clsAdd(el, token) {
+    if (el.classList) el.classList.add(token);
+    else if ((' ' + el.className + ' ').indexOf(' ' + token + ' ') < 0) el.className += ' ' + token;
+  }
+  function clsRemove(el, token) {
+    if (el.classList) el.classList.remove(token);
+    else el.className = (' ' + el.className + ' ').replace(new RegExp(' ' + token + ' ', 'g'), ' ').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
+  }
+  window.clsAdd = clsAdd;
+  window.clsRemove = clsRemove;
+
   function setStatus(cls, text) {
     dotEl.className = cls;
     statusTextEl.textContent = text;
@@ -433,9 +488,9 @@
 
   function refreshStale() {
     clearTimeout(staleTimer);
-    speedEl.classList.remove('stale');
+    clsRemove(speedEl, 'stale');
     staleTimer = setTimeout(function () {
-      speedEl.classList.add('stale');
+      clsAdd(speedEl, 'stale');
       setStatus('wait', '信号丢失');
     }, 5000);
   }
@@ -477,7 +532,8 @@
 
     var speedText = kmh >= 100 ? Math.round(kmh) : kmh.toFixed(1);
     speedEl.textContent = speedText;
-    speedEl.dataset.len = speedText.length;
+    speedEl.setAttribute('data-len', speedText.length); // 不用 dataset：极老浏览器不支持
+    if (window.__updateUnits) window.__updateUnits(); // 位数变化后重算像素字号
     if (kmh > maxSpeed) {
       maxSpeed = kmh;
       maxEl.textContent = '最高 ' + maxSpeed.toFixed(1);
@@ -562,13 +618,18 @@ if ('serviceWorker' in navigator) {
   }
 
   function applyTheme(t) {
-    if (t === 'dark' || t === 'light') root.dataset.theme = t;
-    else delete root.dataset.theme;
+    // 不用 dataset / classList.toggle：极老浏览器不支持
+    if (t === 'dark' || t === 'light') root.setAttribute('data-theme', t);
+    else root.removeAttribute('data-theme');
     for (var i = 0; i < opts.length; i++) {
-      opts[i].classList.toggle('active', opts[i].dataset.themeOpt === t);
+      var on = opts[i].getAttribute('data-theme-opt') === t;
+      if (on) window.clsAdd(opts[i], 'active');
+      else window.clsRemove(opts[i], 'active');
     }
     // CSS 变量在下一帧才更新，延后读取
-    requestAnimationFrame(function () {
+    // 老浏览器没有 requestAnimationFrame，用 setTimeout 兜底
+    var raf = window.requestAnimationFrame || function (f) { setTimeout(f, 16); };
+    raf(function () {
       var bg = effectiveBg();
       themeColorMeta.setAttribute('content', bg);
       writeManifest(bg);
@@ -578,14 +639,14 @@ if ('serviceWorker' in navigator) {
   function openSettings() {
     settingsOpen = true;
     window.__settingsOpen = true;
-    mask.classList.add('open');
-    panel.classList.add('open');
+    window.clsAdd(mask, 'open');
+    window.clsAdd(panel, 'open');
   }
   function closeSettings() {
     settingsOpen = false;
     window.__settingsOpen = false;
-    mask.classList.remove('open');
-    panel.classList.remove('open');
+    window.clsRemove(mask, 'open');
+    window.clsRemove(panel, 'open');
   }
 
   btn.addEventListener('click', function (e) {
@@ -599,7 +660,7 @@ if ('serviceWorker' in navigator) {
     (function (o) {
       o.addEventListener('click', function (e) {
         e.stopPropagation();
-        var t = o.dataset.themeOpt;
+        var t = o.getAttribute('data-theme-opt');
         try { localStorage.setItem('theme', t); } catch (err) {}
         applyTheme(t);
       });
@@ -625,12 +686,14 @@ if ('serviceWorker' in navigator) {
 (function () {
   var html = document.documentElement;
   var screenEl = document.getElementById('screen');
+  var speedEl = document.getElementById('speed');
+  var unitEl = document.getElementById('unit');
   var btn = document.getElementById('orientBtn');
   var ORDER = ['auto', 'landscape', 'portrait'];
   var LABEL = { auto: '跟随系统', landscape: '横屏', portrait: '竖屏' };
   var nativeLocked = false;
 
-  function get() { return html.dataset.orient || 'auto'; }
+  function get() { return html.getAttribute('data-orient') || 'auto'; }
   function isFullscreen() {
     return !!(document.fullscreenElement || document.webkitFullscreenElement);
   }
@@ -645,16 +708,37 @@ if ('serviceWorker' in navigator) {
     var dh = swapped ? pw : ph;
     screenEl.style.setProperty('--Uvw', (dw / 100) + 'px');
     screenEl.style.setProperty('--Uvh', (dh / 100) + 'px');
+
+    // 老浏览器不支持 CSS 变量 / min() / dvh，字号直接用 JS 算成像素；
+    // 内联样式优先级最高，任何浏览器渲染结果都一致
+    var len = parseInt(speedEl.getAttribute('data-len'), 10) || 2;
+    var wPct;
+    if (dw > dh) wPct = 26;          // 横屏：右侧留 km/h
+    else if (len === 2) wPct = 58;
+    else if (len === 3) wPct = 46;
+    else if (len === 4) wPct = 34;
+    else wPct = 32;                  // 5 位及以上（如 123.4）
+    speedEl.style.fontSize = Math.min(0.6 * dh, wPct * dw / 100) + 'px';
+    unitEl.style.fontSize = (0.05 * Math.min(dw, dh)) + 'px';
+  }
+  // 供测速脚本在数字位数变化时重算字号
+  window.__updateUnits = updateUnits;
+
+  // 老浏览器没有 Promise，用一个假的 thenable 保持调用方一致
+  function fakeThenable(val) {
+    return { then: function (f) { if (f) f(val); return fakeThenable(val); }, catch: function () { return fakeThenable(val); } };
   }
 
   function tryNativeLock(mode) {
-    if (!screen.orientation || !screen.orientation.lock || !isFullscreen()) return Promise.resolve(false);
+    if (!screen.orientation || !screen.orientation.lock || !isFullscreen()) return fakeThenable(false);
     if (mode === 'auto') {
       if (nativeLocked) { try { screen.orientation.unlock(); } catch (e) {} }
       nativeLocked = false;
-      return Promise.resolve(false);
+      return fakeThenable(false);
     }
-    return screen.orientation.lock(mode).then(function () {
+    var p = screen.orientation.lock(mode);
+    if (!p || !p.then) return fakeThenable(false);
+    return p.then(function () {
       nativeLocked = true;
       return true;
     }).catch(function () { return false; });
@@ -662,7 +746,8 @@ if ('serviceWorker' in navigator) {
 
   function render() {
     var mode = get();
-    btn.classList.toggle('forced', mode !== 'auto');
+    if (mode !== 'auto') window.clsAdd(btn, 'forced');
+    else window.clsRemove(btn, 'forced');
     btn.title = '屏幕方向：' + LABEL[mode] + '（点击切换）';
     updateUnits();
   }
@@ -672,8 +757,8 @@ if ('serviceWorker' in navigator) {
       if (mode === 'auto') localStorage.removeItem('orient');
       else localStorage.setItem('orient', mode);
     } catch (e) {}
-    if (mode === 'auto') delete html.dataset.orient;
-    else html.dataset.orient = mode;
+    if (mode === 'auto') html.removeAttribute('data-orient');
+    else html.setAttribute('data-orient', mode);
     // 原生锁定成功后物理方向会跟着转，CSS 旋转规则自动不匹配（不会双重旋转）
     tryNativeLock(mode).then(render);
     render();
@@ -718,20 +803,20 @@ if ('serviceWorker' in navigator) {
     var fn = el.requestFullscreen || el.webkitRequestFullscreen;
     if (fn) {
       var p = fn.call(el);
-      if (p && p.catch) p.catch(function () {});
+      if (p && typeof p.catch === 'function') p.catch(function () {});
     }
   }
   function exitFullscreen() {
     var fn = document.exitFullscreen || document.webkitExitFullscreen;
     if (fn) {
       var p = fn.call(document);
-      if (p && p.catch) p.catch(function () {});
+      if (p && typeof p.catch === 'function') p.catch(function () {});
     }
   }
   function toggleFullscreen() {
     if (isFullscreen()) exitFullscreen();
     else enterFullscreen();
-    hint.classList.add('hide');
+    window.clsAdd(hint, 'hide');
   }
 
   // 双击检测：触摸和鼠标统一走 click，300ms 内两次视为双击
@@ -751,17 +836,22 @@ if ('serviceWorker' in navigator) {
   document.addEventListener('dblclick', function (e) { e.preventDefault(); });
 
   // standalone（从主屏幕图标启动）本就全屏，隐藏提示
-  if (isStandalone()) hint.classList.add('hide');
-  else setTimeout(function () { hint.classList.add('show'); }, 800);
+  if (isStandalone()) window.clsAdd(hint, 'hide');
+  else setTimeout(function () { window.clsAdd(hint, 'show'); }, 800);
 
   // 屏幕常亮：Wake Lock API（需 HTTPS），页面重新可见时自动重新申请
   var wakeLock = null;
   function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
-    navigator.wakeLock.request('screen').then(function (lock) {
-      wakeLock = lock;
-      lock.addEventListener('release', function () { wakeLock = null; });
-    }).catch(function () {});
+    var p = navigator.wakeLock.request('screen');
+    if (p && typeof p.then === 'function') {
+      p.then(function (lock) {
+        wakeLock = lock;
+        if (lock && typeof lock.addEventListener === 'function') {
+          lock.addEventListener('release', function () { wakeLock = null; });
+        }
+      }).catch(function () {});
+    }
   }
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && !wakeLock) requestWakeLock();
