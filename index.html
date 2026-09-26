@@ -9,11 +9,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>码表</title>
 <script>
-// 首屏前应用主题，避免闪烁：auto=跟随系统（默认）/ dark / light
+// 首屏前应用主题与屏幕方向，避免闪烁：auto=跟随系统（默认）/ dark / light
 (function () {
   try {
     var t = localStorage.getItem('theme') || 'auto';
     if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+    var o = localStorage.getItem('orient') || 'auto';
+    if (o === 'portrait' || o === 'landscape') document.documentElement.dataset.orient = o;
   } catch (e) {}
 })();
 </script>
@@ -72,18 +74,72 @@
     transition: background .3s, color .3s;
   }
 
+  /* 屏幕旋转包装层：默认铺满视口，内部 fixed 元素以此为包含块 */
+  #screen {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+  /* 物理竖屏 → 强制横屏：顺时针 90°，宽高互换
+     显示边映射：上→物理右，右→物理下，下→物理左，左→物理上 */
+  @media (orientation: portrait) {
+    html[data-orient="landscape"] #screen {
+      width: 100dvh;
+      height: 100vw;
+      transform: translate3d(100vw, 0, 0) rotate(90deg);
+      transform-origin: left top;
+    }
+    html[data-orient="landscape"] #app {
+      padding: env(safe-area-inset-right) env(safe-area-inset-bottom)
+               env(safe-area-inset-left) env(safe-area-inset-top);
+    }
+    html[data-orient="landscape"] #status { top: calc(env(safe-area-inset-right) + 10px); }
+    html[data-orient="landscape"] #max { bottom: calc(env(safe-area-inset-left) + 12px); }
+    html[data-orient="landscape"] #settingsBtn,
+    html[data-orient="landscape"] #orientBtn {
+      top: calc(env(safe-area-inset-right) + 8px);
+    }
+    html[data-orient="landscape"] #settingsBtn { right: calc(env(safe-area-inset-bottom) + 10px); }
+    html[data-orient="landscape"] #orientBtn { right: calc(env(safe-area-inset-bottom) + 54px); }
+  }
+  /* 物理横屏 → 强制竖屏：逆时针 90°，宽高互换
+     显示边映射：上→物理左，右→物理上，下→物理右，左→物理下 */
+  @media (orientation: landscape) {
+    html[data-orient="portrait"] #screen {
+      width: 100dvh;
+      height: 100vw;
+      transform: translate3d(0, 100dvh, 0) rotate(-90deg);
+      transform-origin: left top;
+    }
+    html[data-orient="portrait"] #app {
+      padding: env(safe-area-inset-left) env(safe-area-inset-top)
+               env(safe-area-inset-right) env(safe-area-inset-bottom);
+    }
+    html[data-orient="portrait"] #status { top: calc(env(safe-area-inset-left) + 10px); }
+    html[data-orient="portrait"] #max { bottom: calc(env(safe-area-inset-right) + 12px); }
+    html[data-orient="portrait"] #settingsBtn,
+    html[data-orient="portrait"] #orientBtn {
+      top: calc(env(safe-area-inset-left) + 8px);
+    }
+    html[data-orient="portrait"] #settingsBtn { right: calc(env(safe-area-inset-top) + 10px); }
+    html[data-orient="portrait"] #orientBtn { right: calc(env(safe-area-inset-top) + 54px); }
+  }
+
   #app {
-    height: 100dvh;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2dvh;
+    gap: calc(2 * var(--Uvh, 1dvh));
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
+  /* 数字严格居中，单位挂在数字右下（不挤占居中宽度） */
+  #app > div { position: relative; display: inline-block; }
+
   #speed {
-    font-size: min(52dvh, 30vw);
+    font-size: min(calc(52 * var(--Uvh, 1dvh)), calc(30 * var(--Uvw, 1vw)));
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -95,10 +151,14 @@
   #speed.stale { color: var(--fg-stale); }
 
   #unit {
-    font-size: min(5dvh, 5vw);
+    position: absolute;
+    left: 100%;
+    bottom: 0.08em;
+    margin-left: .25em;
+    font-size: min(calc(5 * var(--Uvh, 1dvh)), calc(5 * var(--Uvw, 1vw)));
     color: var(--fg-dim);
-    letter-spacing: .3em;
-    margin-left: .3em;
+    letter-spacing: .2em;
+    white-space: nowrap;
   }
 
   #status {
@@ -131,10 +191,22 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* 横屏：速度偏左，留出握持区 */
+  /* 横屏布局：强制横屏，或 auto 下物理横屏 */
+  html[data-orient="landscape"] #app {
+    flex-direction: row;
+    gap: calc(3 * var(--Uvw, 1vw));
+  }
+  html[data-orient="landscape"] #speed {
+    font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(24 * var(--Uvw, 1vw)));
+  }
   @media (orientation: landscape) {
-    #app { flex-direction: row; justify-content: center; gap: 3vw; }
-    #speed { font-size: min(60dvh, 24vw); }
+    html:not([data-orient]) #app {
+      flex-direction: row;
+      gap: calc(3 * var(--Uvw, 1vw));
+    }
+    html:not([data-orient]) #speed {
+      font-size: min(calc(60 * var(--Uvh, 1dvh)), calc(24 * var(--Uvw, 1vw)));
+    }
   }
 
   #fsHint {
@@ -174,6 +246,26 @@
   }
   #settingsBtn:active { color: var(--fg); }
   #settingsBtn svg { width: 22px; height: 22px; }
+
+  #orientBtn {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 8px);
+    right: calc(env(safe-area-inset-right) + 54px);
+    width: 38px; height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--fg-dim);
+    border-radius: 50%;
+    z-index: 20;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #orientBtn:active { color: var(--fg); }
+  #orientBtn svg { width: 21px; height: 21px; }
+  #orientBtn.forced { color: #0a84ff; }
 
   /* 设置面板 */
   #settingsMask {
@@ -249,6 +341,7 @@
 </style>
 </head>
 <body>
+<div id="screen">
 <div id="app">
   <div>
     <span id="speed">00</span>
@@ -259,6 +352,14 @@
 <div id="max">最高 0.0</div>
 <div id="fsHint">双击屏幕全屏</div>
 
+<button id="orientBtn" aria-label="切换屏幕方向">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8V5a2 2 0 0 1 2-2h11"/>
+    <path d="M21 16v3a2 2 0 0 1-2 2H8"/>
+    <polyline points="16 3 20 3 20 7"/>
+    <polyline points="8 21 4 21 4 17"/>
+  </svg>
+</button>
 <button id="settingsBtn" aria-label="设置">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/>
@@ -273,6 +374,7 @@
   <div class="theme-opt" data-theme-opt="light"><span>浅色</span><span class="radio"></span></div>
   <button id="settingsClose">完成</button>
 </div>
+</div><!-- /#screen -->
 
 <script>
 (function () {
@@ -467,6 +569,87 @@ if ('serviceWorker' in navigator) {
   }
 
   applyTheme(current());
+})();
+
+// 屏幕方向快捷切换：auto（跟随系统）→ 横屏 → 竖屏 → auto
+// 全屏时优先用原生 Screen Orientation API，失败/不支持时 CSS 旋转兜底
+(function () {
+  var html = document.documentElement;
+  var screenEl = document.getElementById('screen');
+  var btn = document.getElementById('orientBtn');
+  var ORDER = ['auto', 'landscape', 'portrait'];
+  var LABEL = { auto: '跟随系统', landscape: '横屏', portrait: '竖屏' };
+  var nativeLocked = false;
+
+  function get() { return html.dataset.orient || 'auto'; }
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  // 按“显示方向”更新尺寸变量（旋转后物理视口与显示视口宽高互换）
+  function updateUnits() {
+    var mode = get();
+    var pw = window.innerWidth, ph = window.innerHeight;
+    var swapped = (mode === 'landscape' && pw < ph)
+               || (mode === 'portrait' && pw > ph);
+    var dw = swapped ? ph : pw;
+    var dh = swapped ? pw : ph;
+    screenEl.style.setProperty('--Uvw', (dw / 100) + 'px');
+    screenEl.style.setProperty('--Uvh', (dh / 100) + 'px');
+  }
+
+  function tryNativeLock(mode) {
+    if (!screen.orientation || !screen.orientation.lock || !isFullscreen()) return Promise.resolve(false);
+    if (mode === 'auto') {
+      if (nativeLocked) { try { screen.orientation.unlock(); } catch (e) {} }
+      nativeLocked = false;
+      return Promise.resolve(false);
+    }
+    return screen.orientation.lock(mode).then(function () {
+      nativeLocked = true;
+      return true;
+    }).catch(function () { return false; });
+  }
+
+  function render() {
+    var mode = get();
+    btn.classList.toggle('forced', mode !== 'auto');
+    btn.title = '屏幕方向：' + LABEL[mode] + '（点击切换）';
+    updateUnits();
+  }
+
+  function setMode(mode) {
+    try {
+      if (mode === 'auto') localStorage.removeItem('orient');
+      else localStorage.setItem('orient', mode);
+    } catch (e) {}
+    if (mode === 'auto') delete html.dataset.orient;
+    else html.dataset.orient = mode;
+    // 原生锁定成功后物理方向会跟着转，CSS 旋转规则自动不匹配（不会双重旋转）
+    tryNativeLock(mode).then(render);
+    render();
+  }
+
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var next = ORDER[(ORDER.indexOf(get()) + 1) % ORDER.length];
+    setMode(next);
+  });
+
+  // 进入/退出全屏时重新评估原生锁定；退出后 CSS 兜底自动接管
+  document.addEventListener('fullscreenchange', function () {
+    if (isFullscreen()) tryNativeLock(get());
+    else if (nativeLocked) {
+      try { screen.orientation.unlock(); } catch (e) {}
+      nativeLocked = false;
+    }
+    render();
+  });
+
+  window.addEventListener('resize', updateUnits);
+  window.addEventListener('orientationchange', updateUnits);
+  window.addEventListener('load', render);
+  render();
 })();
 
 // 双击切换全屏 + 屏幕常亮（Wake Lock）
