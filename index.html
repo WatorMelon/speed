@@ -179,7 +179,7 @@
     font-weight: 700;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
+    /* 老 WebKit 对负字距渲染有 bug，数字会挤在一起，去掉 */
     color: #111111;
     color: var(--fg);
     transition: color .3s;
