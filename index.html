@@ -109,13 +109,13 @@
 <body>
 <div id="app">
   <div>
-    <span id="speed">--</span>
+    <span id="speed">00</span>
     <span id="unit">km/h</span>
   </div>
 </div>
 <div id="status"><span id="dot" class="wait"></span><span id="statusText">GPS 定位中…</span></div>
 <div id="max">最高 0.0</div>
-<div id="fsHint">轻点屏幕进入全屏</div>
+<div id="fsHint">双击屏幕全屏</div>
 
 <script>
 (function () {
@@ -239,7 +239,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// 自动全屏：浏览器要求全屏必须由用户手势触发，故首次轻点时进入
+// 双击切换全屏 + 屏幕常亮（Wake Lock）
 (function () {
   var hint = document.getElementById('fsHint');
 
@@ -259,28 +259,56 @@ if ('serviceWorker' in navigator) {
       if (p && p.catch) p.catch(function () {});
     }
   }
-  function onFsChange() {
-    if (isFullscreen() || isStandalone()) hint.classList.add('hide');
+  function exitFullscreen() {
+    var fn = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fn) {
+      var p = fn.call(document);
+      if (p && p.catch) p.catch(function () {});
+    }
+  }
+  function toggleFullscreen() {
+    if (isFullscreen()) exitFullscreen();
+    else enterFullscreen();
+    hint.classList.add('hide');
   }
 
-  if (isStandalone() || isFullscreen()) {
-    hint.classList.add('hide');
-  } else {
-    document.addEventListener('fullscreenchange', onFsChange);
-    document.addEventListener('webkitfullscreenchange', onFsChange);
-    // 首次任意触摸/点击即进入全屏，只触发一次
-    document.addEventListener('touchstart', function once() {
-      enterFullscreen();
-      setTimeout(function () { hint.classList.add('hide'); }, 1000);
-      document.removeEventListener('touchstart', once);
-    }, { once: true });
-    document.addEventListener('click', function once() {
-      enterFullscreen();
-      setTimeout(function () { hint.classList.add('hide'); }, 1000);
-      document.removeEventListener('click', once);
-    }, { once: true });
-    setTimeout(function () { hint.classList.add('show'); }, 800);
+  // 双击检测：触摸和鼠标统一走 click，300ms 内两次视为双击
+  var lastTap = 0;
+  function onTap(e) {
+    var now = Date.now();
+    if (now - lastTap < 300) {
+      e.preventDefault();
+      toggleFullscreen();
+      lastTap = 0;
+    } else {
+      lastTap = now;
+    }
   }
+  document.addEventListener('click', onTap);
+  document.addEventListener('dblclick', function (e) { e.preventDefault(); });
+
+  // standalone（从主屏幕图标启动）本就全屏，隐藏提示
+  if (isStandalone()) hint.classList.add('hide');
+  else setTimeout(function () { hint.classList.add('show'); }, 800);
+
+  // 屏幕常亮：Wake Lock API（需 HTTPS），页面重新可见时自动重新申请
+  var wakeLock = null;
+  function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    navigator.wakeLock.request('screen').then(function (lock) {
+      wakeLock = lock;
+      lock.addEventListener('release', function () { wakeLock = null; });
+    }).catch(function () {});
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && !wakeLock) requestWakeLock();
+  });
+  // 首次交互后申请（部分浏览器要求用户手势）
+  document.addEventListener('click', function once() {
+    requestWakeLock();
+    document.removeEventListener('click', once);
+  }, { once: true });
+  requestWakeLock();
 })();
 </script>
 </body>
